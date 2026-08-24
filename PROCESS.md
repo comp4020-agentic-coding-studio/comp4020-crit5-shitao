@@ -38,3 +38,14 @@ what the mouse does is to move it.
    a real downward trend (70/60/90/65/38/12) and a visibly thinning brush and
    trail near the end.
    [`cd95873`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-shitao/commit/cd95873)
+
+3. **A run resetting to zero every death gave a second life nothing to chase.**
+   The brief's "thread worth pulling" is what carries five minutes past the
+   first two mechanics being understood, and distance already doubled as the
+   score --- it just vanished on every reset. Persisting the best distance in
+   `localStorage` and drawing it as a small second number beneath the live
+   score turns "try again" into "beat that," without adding a word of
+   instruction: verified live in `agent-browser` by dying deliberately,
+   confirming the number survived both the in-page reset and a full page
+   reload at both marking viewports.
+   [`3f9ea50`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-shitao/commit/3f9ea50)
