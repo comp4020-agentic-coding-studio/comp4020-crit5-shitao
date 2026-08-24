@@ -54,8 +54,8 @@ export const DEFAULT_CONFIG: Config = {
   gapHeight: 0.26,
   dropSpacing: 0.37,
   dropRadius: 0.022,
-  inkDecay: 0.045,
-  inkPerDrop: 0.3,
+  inkDecay: 0.09,
+  inkPerDrop: 0.2,
   brushEase: 10,
 };
 
