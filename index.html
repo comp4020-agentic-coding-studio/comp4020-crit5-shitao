@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>COMP4020 prototype</title>
+    <title>One Stroke</title>
     <meta
       name="description"
-      content="Replace this with one sentence saying what this page is. A search result and a link preview both show it."
+      content="A single ink stroke, drawn one gap at a time, for as long as it holds."
     />
 
     <!--
@@ -23,15 +23,12 @@
   <body>
     <header>
       <nav aria-label="Primary">
-        <a href="./">Home</a>
+        <a href="./">One Stroke</a>
       </nav>
     </header>
     <main>
-      <h1>COMP4020 prototype</h1>
-      <p>
-        Replace this with your prototype. This week's brief is on the course website;
-        <code>spec/README.md</code> explains how the checks in this repo relate to it.
-      </p>
+      <h1 class="visually-hidden">One Stroke</h1>
+      <canvas id="game" aria-label="One Stroke, an ink drawing game"></canvas>
     </main>
     <script type="module" src="./main.ts"></script>
   </body>
