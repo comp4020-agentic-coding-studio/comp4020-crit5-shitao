@@ -25,6 +25,13 @@ const RESET_DELAY = 1.3; // seconds the dried stroke lingers before a fresh one 
 const trail: number[] = []; // recent brushY samples, in world (0..1) units, for the ink tail
 const TRAIL_LENGTH = 14;
 
+// A run's distance resets to 0 on death; persisting the best across runs (and
+// across visits) is what turns "try again" into "beat that" --- the thread
+// worth pulling once the wall/ink pair is no longer new. Session state, so it
+// lives here rather than in the pure sim.
+const BEST_KEY = "one-stroke-best-distance";
+let best = Number(localStorage.getItem(BEST_KEY) ?? "0") || 0;
+
 function resizeCanvas(): void {
   const rect = canvas!.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
@@ -119,11 +126,18 @@ function drawScene(now: number): void {
   ctx!.fillStyle = "rgba(28, 26, 23, 0.55)";
   ctx!.fillRect(w * 0.04, h - 14, w * 0.2 * state.ink, 4);
 
-  // distance, as a bare number --- feedback, not instruction
+  // distance, as a bare number --- feedback, not instruction --- with the
+  // standing best beneath it once one exists, so a stranger's second life
+  // already has something to chase
   ctx!.fillStyle = "rgba(28, 26, 23, 0.55)";
   ctx!.font = "16px system-ui, sans-serif";
   ctx!.textAlign = "right";
   ctx!.fillText(String(Math.floor(state.distance * 100)), w - 16, 24);
+  if (best > 0) {
+    ctx!.font = "12px system-ui, sans-serif";
+    ctx!.fillStyle = "rgba(28, 26, 23, 0.35)";
+    ctx!.fillText(`best ${Math.floor(best * 100)}`, w - 16, 42);
+  }
 }
 
 let lastTime: number | null = null;
@@ -138,7 +152,13 @@ function frame(now: number): void {
     state = advance(state, dt, pointerY, DEFAULT_CONFIG);
     trail.push(state.brushY);
     if (trail.length > TRAIL_LENGTH) trail.shift();
-    if (!state.alive) diedAt = now;
+    if (!state.alive) {
+      diedAt = now;
+      if (state.distance > best) {
+        best = state.distance;
+        localStorage.setItem(BEST_KEY, String(best));
+      }
+    }
   } else if (diedAt !== null && (now - diedAt) / 1000 >= RESET_DELAY) {
     state = createInitialState();
     diedAt = null;
