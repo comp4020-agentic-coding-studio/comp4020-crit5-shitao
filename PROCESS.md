@@ -1,70 +1,40 @@
 # Process overview
 
-<!-- TEMPLATE: this file is a shape to fill in, not a form. Replace everything
-     in it with your own overview, and delete this comment — `pnpm
-     check:evidence` will remind you if it's still here. -->
-
-A reading-guide to how the work came together --- a map to your process, not an
-essay about it. Markers read this file and follow its citations; they don't
-trawl the repo for evidence you didn't point at, so if a moment mattered, cite
-it.
-
-This file is the shape; the course site's
-[assessment page](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/topics/assessment/#what-you-submit)
-is the requirement, and its
-[word counts](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/topics/assessment/#word-counts)
-cover every deliverable.
-
 ## What I built
 
-One paragraph: the thing, and the idea behind it.
+**One Stroke**: a single ink brushstroke, steered by pointer, touch or arrow
+keys, that has to keep threading a gap in the next dark band while its ink
+runs dry unless it also catches the small red drops drifting past. Either
+failure (a wall, or the stroke running out of ink) ends the run and a fresh
+one starts a moment later; the opening screen shows nothing but the still
+brush and the first band already approaching, so the only way to find out
+what the mouse does is to move it.
 
 ## The moments that mattered
 
-Three or four for an assignment; fewer is fine for a weekly prototype. Keep the
-list short so each moment has room to do all four jobs:
+1. **Keeping the simulation pure paid off immediately.** A canvas game is easy
+   to end up testing only by eye, and `vitest`'s jsdom has no real canvas
+   backend to draw against anyway. So the wall-collision rule, the ink
+   depletion/collection rule, and the deterministic gap pattern all live in
+   `game-logic.ts` as functions of state and elapsed time, with no
+   `Math.random` and no canvas or DOM in sight; `main.ts` only reads that
+   state to draw it. `spec/game.test.ts` puts the one rule the brief asks
+   for --- a wall ends the round only if the brush misses its gap --- under a
+   table-driven test, alongside the ink-runs-dry and drop-collection cases,
+   all runnable with no browser at all.
+   [`21de962`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-shitao/commit/21de962)
 
-1. **what happened** --- the problem, or the thing that went wrong
-2. **what you did instead of the obvious thing** --- the call you made, and why
-   it beat the obvious one
-3. **how you knew it was right** --- the check you ran, the viewport you looked
-   at, what you read before accepting the diff
-4. **the citation** --- a commit or commit range, a `CLAUDE.md` change, a check
-   that went from red to green, a prompt paired with the commit it produced
-
-Jobs 2 and 3 are the ones the repo can't tell a reader on its own, so they're
-where the marks are. The strongest moments are the ones where a correction
-landed in the **harness** --- the standards and checks your work has to satisfy
---- rather than in a retry: a rule added to `CLAUDE.md`, a check wired up, an
-attempt thrown away. Retrying until it passes is the routine case, and changing
-what the work runs against is the skilled one.
-
-Cite each moment as a link whose text is the commit hash or range and whose
-target is this repo's commit or compare URL, so a reader clicks straight to the
-evidence:
-
-- one commit: [`a1b2c3d`](https://github.com/YOUR-ORG/YOUR-REPO/commit/a1b2c3d)
-- a range:
-  [`a1b2c3d...e4f5a6b`](https://github.com/YOUR-ORG/YOUR-REPO/compare/a1b2c3d...e4f5a6b)
-
-To pair a prompt with the commit it produced, quote the prompt (curated, not a
-full transcript) next to the citation:
-
-> the prompt, verbatim
-
-Screenshots are welcome where one carries the verification better than a
-sentence does. Commit the file to this repo and link it with a **relative**
-path, which is what makes it render on GitHub: `![alt text](docs/before.png)`.
-Images don't count towards the word count and don't replace the citation.
-
-## Before you ship
-
-`pnpm check:evidence` verifies your citations resolve to real commits, that a
-reflection entry the marker reads is in `reflections/`, and that your
-`CLAUDE.md` is there --- before a marker ever opens the file. It checks that
-your map is traceable, not that it is good: the marker judges whether your
-small, deliberately chosen set of moments shows real judgement and reflection. A
-green check is not a substitute for that curation.
-
-Images aren't checked: unlike a citation whose SHA doesn't resolve, a broken
-image is visible the moment this file is rendered on GitHub.
+2. **Playing the finished game found a problem reading the config couldn't.**
+   The ink-decay constant (0.045/s, a 22-second dry-out with zero drops) read
+   like real pressure on paper. Actually playing a sustained dodge run ---
+   using `agent-browser` to steer through several gaps in a row, and reading
+   the ink meter back out of the canvas's own pixels rather than adding a
+   debug hook --- showed ink sitting at 60-90% the whole time: the drop and
+   gap patterns wander through similar y-ranges, so tracking gaps well means
+   passing close to most drops anyway. The second mechanic never actually
+   threatened a competent player, which undercuts the brief's case for
+   combining two mechanics in the first place. Raised `inkDecay` to 0.09 and
+   dropped `inkPerDrop` to 0.2; replaying the identical dodge sequence showed
+   a real downward trend (70/60/90/65/38/12) and a visibly thinning brush and
+   trail near the end.
+   [`cd95873`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-shitao/commit/cd95873)
