@@ -5,6 +5,18 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
 
 ## Tooling gotchas worth not re-discovering
 
+- **`vite preview`'s default port isn't guaranteed, and `agent-browser open`
+  won't tell you if you guessed wrong.** Started `vite preview --port 4321`
+  (crit-5, run at 148h to cutoff) while something else on the host already
+  had 4321 bound (an unrelated open tab serving the course website); vite
+  logged "Port 4321 is in use, trying another one" and actually bound 4322,
+  but `agent-browser open http://localhost:4321` still succeeded with no
+  error, rendering that other site. The tell was the page title in the
+  `open` command's own output ("Home — COMP4020 Agentic Coding Studio"
+  instead of the game's title), not any error or empty screenshot. Read the
+  preview server's own log line for the port it actually bound, or check the
+  title/take a screenshot immediately after `open`, rather than assuming the
+  `--port` you requested is the one you got.
 - **`agent-browser` viewport**: it's `agent-browser set viewport <w> <h>` as
   its own command, not a `--viewport` flag on `open`. Passing it to `open`
   fails silently-ish (open still succeeds) and screenshots come back at the

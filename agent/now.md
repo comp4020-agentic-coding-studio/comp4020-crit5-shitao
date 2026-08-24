@@ -1,43 +1,52 @@
-# Hand-off — crit-5 (One Stroke) deepened with a persisted best score
+# Hand-off — crit-5 (One Stroke) re-verified, no changes needed
 
 **Deliverable:** `comp4020-crit5-shitao`, source `crits/05-game` ("A game").
-This run was 159h to cutoff — plan/build/deepen, not the final run (the
-prompt didn't call it last). Brief re-fetched, unchanged from the previous
-run's copy. No reflection written, nothing pushed, per doctrine's
-finishing-steps gate (push is gated to inside 24h to cutoff).
+This run was 148h to cutoff — plan/build/deepen, not the final run (the
+prompt didn't call it last). Brief re-fetched, byte-identical to the copy the
+previous run recorded.
 
-**State found at start of run:** everything from the last hand-off
-(`21de962`..`f50e08f`) was already on `origin/main` — the harness's own
-`memory: tick snapshot` commit had pushed it out-of-band, per the standing
-"out-of-band commits are normal" note in MEMORY.md. Working tree clean,
-`pnpm check` green (28 tests), `pnpm check:evidence` failing only on the
-expected missing `reflections/crit-5.md`.
+**State found at start of run:** `main` matched the last hand-off exactly
+(`7976b7b` at HEAD, `origin/main` in sync — the harness's tick-snapshot
+commit had already pushed the previous run's work out-of-band, per the
+standing note in MEMORY.md). Working tree clean, `pnpm check` green (28
+tests), `pnpm check:evidence` failing only on the expected missing
+`reflections/crit-5.md`.
 
-**What this run added:** a persisted best-distance (`3f9ea50`). The game was
-already content-complete — two mechanics, one focused test, one real
-playtest-driven tuning fix, card replaced — but a run's distance reset to
-zero on every death, so a stranger's second life had nothing concrete to
-chase. Added a `localStorage`-backed `best`, drawn as a small second number
-under the live score (feedback, not instruction — doesn't touch the
-no-tutorial opening screen). Verified live in `agent-browser`, not just by
-reading the diff: died deliberately, confirmed "best" appeared and survived
-both the in-page auto-reset and a full page reload, at both 1280×800 and
-390×844, console clean both times. `PROCESS.md` now has three cited moments
-(`a05f075`). Preview server confirmed killed via `lsof -ti:<port>` before
-finishing, per the standing `pkill`-exit-code gotcha.
+**What this run did:** no code changes. Read through `game-logic.ts` and
+`main.ts` in full looking for a genuine deepening opportunity and found
+none worth the scope risk — the previous run's hand-off explicitly warned
+against adding more mechanics without a specific reason, and nothing in a
+fresh read contradicted that. Instead did the verification pass MEMORY.md's
+standing rule asks for (checks alone aren't sufficient evidence): built,
+served via `vite preview`, and played the live game in `agent-browser` at
+1280×800 — steered through several walls, let a run die naturally, watched
+`best` update on death, watched the auto-reset start a fresh run, then did a
+full page reload and confirmed `best` survived it. Repeated the reload check
+at 390×844 (no overflow, no layout regression). Console clean (`agent-browser
+errors`) at every step. Confirmed the preview server was actually killed
+afterwards via `lsof -ti:<port>` (not just trusting the kill's exit code, per
+the standing gotcha), not a bare `curl` after.
 
-**State at end of run:** `main` is 2 commits ahead of what was on
-`origin/main` at the start of the run (`3f9ea50`, `a05f075`), working tree
-clean, nothing pushed this run — correct for a non-final run.
+One incidental finding, not a bug: `vite preview` picked port 4322, not
+4321, because something else on this host already had 4321 bound (the course
+website, it turned out, from an unrelated open tab) — `agent-browser open`
+against 4321 silently rendered that other site with no error, and the
+mismatch was only caught by checking the page title/screenshot before
+trusting the session. Worth a glance at the actual port `vite preview` logs
+rather than assuming the requested one, in any future run against this or
+another repo.
+
+**State at end of run:** no commits made — nothing needed one. Working tree
+clean, `main` unchanged from start of run.
 
 **Most important next action:** on a future run of `comp4020-crit5-shitao`
 (especially the one the prompt names as final): re-fetch the source in case
 the brief changed, then do the finishing steps — write
-`reflections/crit-5.md` (title "A game", both standing prompts; either the
-playtest-tuning story or this run's "distance resetting to zero undercut the
-five-minute stakes" story is a legitimate breakthrough answer, pick whichever
-reads stronger), a final full-viewport browser pass (repeat the persisted-best
-check across a reload, not just a reset, since that's the part most likely to
-regress silently), `git status` clean, push. Don't add further game
-mechanics without a specific reason — the brief is satisfied and further
-scope risks diluting the five-minute arc rather than deepening it.
+`reflections/crit-5.md` (title "A game", both standing prompts; the
+playtest-tuning story, the persisted-best story, or this run's "checks were
+green and nothing needed fixing, but a live playtest is still what verified
+that, not the checks" observation are all legitimate breakthrough answers —
+pick whichever reads strongest), a final full-viewport browser pass, `git
+status` clean, push. Continue resisting the urge to add further mechanics
+without a specific reason surfaced by actual play — two runs in a row have
+now confirmed the brief is satisfied as-is.
