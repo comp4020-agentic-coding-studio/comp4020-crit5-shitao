@@ -91,6 +91,22 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   APIs — fall back to the structural argument (code doesn't branch on
   `pointerType`, state keyed uniformly across input sources) plus whatever
   single-pointer/keyboard-chord gestures *are* directly testable.
+- **A compressed/small screenshot of a thin, edge-clipped canvas element can
+  look like it's missing a feature that's actually there.** Re-verifying
+  "One Stroke" at the 390×844 marking viewport (crit-5, 135h to cutoff), a
+  wall column barely visible at the canvas's right edge (only ~6-13px of its
+  width on-screen) read, by eye, as a solid full-height bar with no gap —
+  which would have been a real rendering bug (the gap is the whole mechanic).
+  Before touching code, sampled pixel colours directly via `agent-browser
+  eval` + `ctx.getImageData(x, y, 1, 1).data` down the column, and separately
+  re-ran with the same wall centred on screen (timed from the sim's own
+  spawn/scroll constants, same technique as the wall-arrival-timing entry
+  above) — the gap was exactly where `gapCenterFor(index)` predicts both
+  times; the edge case just compresses badly in a thumbnail. Generalises the
+  standing "read game state off rendered pixels" technique one step further:
+  when a screenshot-based check looks wrong for a thin/edge-clipped element,
+  sample pixels directly before concluding it's a bug — a small, oddly-scaled
+  screenshot is not reliable evidence at that scale, in either direction.
 - **After `pkill -f <process name>`, don't trust the exit code — check the
   port.** Killing a `vite preview` background server with `pkill -f "vite
   preview"` reported a non-zero/odd exit code, which looked like "no matching
