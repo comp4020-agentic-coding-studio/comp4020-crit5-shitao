@@ -62,3 +62,23 @@ what the mouse does is to move it.
    against the unguarded code, then a rendering game against the
    try/catch-wrapped version.
    [`f6989ee`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-shitao/commit/f6989ee)
+
+5. **A re-verification pass at a viewport nobody had declared "marking"
+   caught a bug the two marking viewports couldn't.** Both 1920x1080 and
+   390x844 render pixel-perfect, and had done so on every prior check --- but
+   the game's CSS relied on flexbox stretch to size the canvas, and a
+   canvas's own `width`/`height` attributes give it an intrinsic aspect
+   ratio that overrides that stretch once the computed height goes "auto".
+   `resizeCanvas()` fed its own rendered size back in as the next bitmap
+   size, so each `resize` event nudged that ratio further; a short run of
+   `agent-browser` viewport changes (the kind a real user causes by
+   resizing a window or rotating a device) grew the canvas from 577px to
+   2976px tall with no console error, pushing the ink meter and best-score
+   readout off-screen. Found by testing sizes between the two marking
+   viewports rather than only those two, and by testing a *sequence* of
+   resizes in one session rather than one `open` per size. Fixed by
+   measuring from `main` --- a plain block with no intrinsic ratio of its
+   own --- and setting the canvas's box in explicit pixels, so the canvas's
+   own attributes can never re-enter the layout calculation; confirmed
+   against nine consecutive resizes with no drift.
+   [`285e5e0`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-shitao/commit/285e5e0)
