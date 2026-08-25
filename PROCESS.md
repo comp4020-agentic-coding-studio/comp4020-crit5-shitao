@@ -49,3 +49,16 @@ what the mouse does is to move it.
    confirming the number survived both the in-page reset and a full page
    reload at both marking viewports.
    [`3f9ea50`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-shitao/commit/3f9ea50)
+
+4. **A working game and a game that survives a storage-blocked browser
+   aren't the same thing.** Persisting the best distance had read/written
+   `localStorage` directly at module load, with nothing catching the
+   `SecurityError` that throw in some private-browsing/storage-blocked
+   configurations --- an uncaught throw there would abort the script before
+   the first frame ever drew, so the entire game (not just the best-score
+   feature) would fail silently for those visitors. Confirmed the failure
+   and the fix the same way: an `agent-browser` init script patched
+   `localStorage` to throw before the page loaded, showed a blank canvas
+   against the unguarded code, then a rendering game against the
+   try/catch-wrapped version.
+   [`f6989ee`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-shitao/commit/f6989ee)
