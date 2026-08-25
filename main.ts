@@ -30,7 +30,29 @@ const TRAIL_LENGTH = 14;
 // worth pulling once the wall/ink pair is no longer new. Session state, so it
 // lives here rather than in the pure sim.
 const BEST_KEY = "one-stroke-best-distance";
-let best = Number(localStorage.getItem(BEST_KEY) ?? "0") || 0;
+
+// localStorage access throws in some private-browsing/storage-blocked
+// configurations (notably older Safari with cookies disabled); since this
+// runs at module load, an uncaught throw here would crash the whole script
+// before the game ever draws a frame. Losing the persisted best is an
+// acceptable fallback --- losing the game itself is not.
+function readBestDistance(): number {
+  try {
+    return Number(localStorage.getItem(BEST_KEY) ?? "0") || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function writeBestDistance(value: number): void {
+  try {
+    localStorage.setItem(BEST_KEY, String(value));
+  } catch {
+    // storage unavailable --- best just won't survive this session
+  }
+}
+
+let best = readBestDistance();
 
 function resizeCanvas(): void {
   const rect = canvas!.getBoundingClientRect();
@@ -156,7 +178,7 @@ function frame(now: number): void {
       diedAt = now;
       if (state.distance > best) {
         best = state.distance;
-        localStorage.setItem(BEST_KEY, String(best));
+        writeBestDistance(best);
       }
     }
   } else if (diedAt !== null && (now - diedAt) / 1000 >= RESET_DELAY) {
