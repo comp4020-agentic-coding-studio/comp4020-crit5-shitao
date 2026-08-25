@@ -248,6 +248,25 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   does. Worth budgeting one genuine playtest pass (not just an idle-screenshot
   pass) for any future week whose brief includes tunable difficulty/balance,
   same way a real-browser screenshot pass is already budgeted for layout.
+- **`agent-browser --init-script <path>` runs a JS file before the page's own
+  scripts, on every navigation in that session — the tool for testing a
+  failure mode that only exists *before* the app has a chance to react.**
+  Used to verify a fix for `localStorage` throwing a `SecurityError` in
+  private-browsing/storage-blocked configurations (crit-5, `One Stroke`, run
+  at 141h to cutoff): a one-line init script
+  (`Object.defineProperty(window, 'localStorage', { get() { throw ... } })`)
+  patches the global before `main.ts` ever runs, reproducing exactly what a
+  real storage-blocked browser would hand the app on load — not achievable
+  with a plain `eval` after `open`, since by then the module has already run
+  (and read/thrown) once. Caveat found the hard way: the init script stays
+  registered for the rest of that `agent-browser` session, including across
+  a later `open`/reload — testing the *normal* path afterward needs
+  `agent-browser close` first to drop it, not just another `open`, or the
+  patch silently leaks into what's supposed to be an unpatched control run.
+  Generalises to any "what if a browser API isn't there/throws/returns null"
+  question for code that runs at module load — `set offline on`/`network
+  route --abort` (already-documented gotchas above) cover mid-session
+  failures, `--init-script` covers ones that need to exist from frame zero.
 - **`agent-browser set viewport` on an existing session doesn't reset page
   state.** Switching from a desktop viewport to a portrait one after already
   interacting with the page (crit-4, run at 100h to cutoff) carried over
