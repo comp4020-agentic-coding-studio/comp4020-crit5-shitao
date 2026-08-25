@@ -292,6 +292,57 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   "what a stranger sees on first contact" at a second viewport, `open` the
   page again after setting the viewport, don't just resize an already-primed
   session.
+- **`agent-browser set viewport` before any session exists doesn't reliably
+  apply to the next `open`.** Calling `set viewport W H` then `open <url>`
+  with no prior open in that session sometimes left `window.innerWidth`
+  reporting the tool's own default size, not the one requested — no error,
+  just silently ignored (crit-5, run at 124h to cutoff). The sequence that
+  reliably works: `open` once (creates the session at whatever default), THEN
+  `set viewport`, THEN `open` again (reload) to actually land at the
+  requested size — confirmed by checking `window.innerWidth/innerHeight` via
+  `eval` after, not by trusting the screenshot's apparent aspect ratio (a
+  landscape screenshot from a viewport that silently stayed 1280x577 can look
+  similar enough to a real desktop shot to not obviously register as wrong).
+  Combines with the two existing viewport gotchas above (`open` before
+  confirming the bound port; `set viewport` not resetting page state) into a
+  general rule: after any `set viewport` call, verify the actual
+  `window.innerWidth/innerHeight` before trusting a screenshot taken at that
+  "size."
+- **A canvas's own `width`/`height` attributes give it an intrinsic aspect
+  ratio that can hijack CSS flex/absolute layout, and letting `resizeCanvas()`
+  read the canvas's own rendered size back in to decide the next bitmap size
+  closes a feedback loop.** Found in "One Stroke" (crit-5, run at 124h to
+  cutoff): the canvas was sized via `flex:1` + `min-height:60vh` (height left
+  "auto"), and a CSS replaced-element rule says an "auto" cross size on a
+  flex/absolutely-positioned item falls back to the element's intrinsic
+  aspect ratio (from its `width`/`height` *content attributes*, not its CSS
+  size) whenever that axis is otherwise indeterminate. `resizeCanvas()` set
+  those attributes from `canvas.getBoundingClientRect()` each resize, so a
+  drifted ratio from one resize became the next resize's input — a genuine
+  divergent feedback loop, not a one-off glitch: a short run of `agent-browser
+  set viewport` calls in one session grew the canvas from 577px to 2976px
+  tall, no console error. Two plausible-looking fixes each turned out
+  incomplete when actually tested (not just reasoned about): adding an
+  explicit `height:100%` to the flex item stopped the divergence but left a
+  small (~100-160px) residual mis-size at some in-between viewport dimensions
+  (traced to percentage-height resolution against a flex-grown ancestor, not
+  fully root-caused); switching to `position:absolute; inset:0` on the
+  assumption that "both dimensions become definite" *reintroduced the exact
+  same divergent bug*, because CSS2.1 §10.6.4 still derives an auto height
+  for an absolutely-positioned *replaced* element from its intrinsic ratio
+  when top+bottom are both set and height itself is "auto" --- `inset` alone
+  doesn't make height non-auto. The fix that actually held under a 9-resize
+  stress test: measure from the canvas's *parent* (a plain block with no
+  intrinsic ratio of its own), and set the canvas's CSS box (`style.width`,
+  `style.height`, `style.left`, `style.top`) as explicit pixel values
+  computed from that measurement, so the canvas's own attributes can never
+  re-enter the layout calculation at all. General lesson: any canvas (or
+  img/video) sized via CSS auto/percentage/stretch rules, whose own
+  width/height attributes are set by JS from a *measurement of itself*, is a
+  candidate for this feedback loop --- test with a *sequence* of resizes in
+  one session, not just isolated opens at fixed sizes, since a single
+  before/after comparison at any one size can look fine while the underlying
+  mechanism still diverges given more resize events.
 
 ## Working habits that paid off
 
@@ -532,3 +583,22 @@ automated check because none of them render at a real viewport. Reconfirms
 the standing rule ("content-complete... is not sufficient evidence the
 rendered page is fine") on a fifth distinct codebase — worth treating as
 settled rather than something to keep re-deriving evidence for.
+
+Sixth confirmation, and a refinement of the rule itself (crit-5, `One
+Stroke`, 124h to cutoff): five prior runs on this same repo had checked the
+two declared marking viewports (1920×1080, 390×844) repeatedly and found
+nothing — both genuinely do render pixel-perfect, still. But a viewport
+*between* them (any short/wide window, e.g. 1280×720 — a realistic laptop
+browser window, not a contrived edge case) exposed a CSS/JS feedback loop
+(see the canvas-aspect-ratio entry above) that grew the canvas without bound
+across a handful of resizes. Neither declared viewport ever triggers it,
+because the bug only manifests when the canvas's own attribute-derived
+aspect ratio disagrees with the flex-stretched size enough to compound
+across *repeated* resize events — a single fixed-size check, however
+thorough, can't see a divergence that only shows up across a sequence. The
+refinement to the standing rule: checking the declared marking viewports is
+necessary but not sufficient — a periodic pass should also try at least one
+size *between* or *around* them (not just the two extremes), and at least
+one *sequence* of resizes within a single session rather than only isolated
+fixed-size opens, since some bugs are only reachable through the resize
+event itself, not through any one static layout.
