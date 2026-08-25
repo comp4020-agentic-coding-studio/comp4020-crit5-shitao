@@ -30,14 +30,21 @@ nav a {
 
 main {
   flex: 1;
-  display: flex;
+  position: relative;
   padding: 0 1rem 1rem;
 }
 
+/* Positioned absolutely with its exact box set in px by resizeCanvas() in
+   main.ts, not by CSS auto/percentage sizing: a canvas's own width/height
+   *attributes* give it an intrinsic aspect ratio, and any CSS path that
+   leaves height "auto" (flex stretch, or an inset-only absolute box) lets
+   that ratio override the fill --- confirmed live by resizing the window
+   and watching the canvas grow without bound as each resize fed its own
+   drifted size back in as the next intrinsic ratio. An explicit px height
+   set directly on the element sidesteps the auto-height/aspect-ratio
+   interaction entirely, regardless of layout mode. */
 canvas#game {
-  flex: 1;
-  width: 100%;
-  min-height: 60vh;
+  position: absolute;
   border-radius: 0.5rem;
   touch-action: none;
   cursor: none;

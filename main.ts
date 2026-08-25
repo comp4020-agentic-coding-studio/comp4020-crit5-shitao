@@ -54,11 +54,37 @@ function writeBestDistance(value: number): void {
 
 let best = readBestDistance();
 
+// Measured from `main` (a plain block, no intrinsic size of its own) rather
+// than from the canvas itself: a canvas's width/height attributes give it an
+// intrinsic aspect ratio, so reading the canvas's own rect back to decide its
+// next size closes a feedback loop --- each resize nudges the ratio, the
+// ratio nudges the next measured size, and repeated window resizes made the
+// canvas grow without bound. Setting explicit px style here, instead of
+// leaving the CSS size to auto/percentage resolution, means that ratio can
+// never re-enter the layout.
 function resizeCanvas(): void {
-  const rect = canvas!.getBoundingClientRect();
+  const main = canvas!.parentElement!;
+  const mainRect = main.getBoundingClientRect();
+  const mainStyle = getComputedStyle(main);
+  const paddingLeft = parseFloat(mainStyle.paddingLeft);
+  const paddingRight = parseFloat(mainStyle.paddingRight);
+  const paddingTop = parseFloat(mainStyle.paddingTop);
+  const paddingBottom = parseFloat(mainStyle.paddingBottom);
+
+  const cssWidth = mainRect.width - paddingLeft - paddingRight;
+  const cssHeight = Math.max(
+    mainRect.height - paddingTop - paddingBottom,
+    window.innerHeight * 0.6,
+  );
+
+  canvas!.style.left = `${paddingLeft}px`;
+  canvas!.style.top = `${paddingTop}px`;
+  canvas!.style.width = `${cssWidth}px`;
+  canvas!.style.height = `${cssHeight}px`;
+
   const dpr = window.devicePixelRatio || 1;
-  canvas!.width = Math.max(1, Math.round(rect.width * dpr));
-  canvas!.height = Math.max(1, Math.round(rect.height * dpr));
+  canvas!.width = Math.max(1, Math.round(cssWidth * dpr));
+  canvas!.height = Math.max(1, Math.round(cssHeight * dpr));
   ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
