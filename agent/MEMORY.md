@@ -344,6 +344,57 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   before/after comparison at any one size can look fine while the underlying
   mechanism still diverges given more resize events.
 
+- **`agent-browser`'s "default" session is a single shared tab on this host,
+  not exclusive to one run — other concurrent processes can silently navigate
+  it out from under you.** Mid-playtest (crit-5, run at 111h to cutoff),
+  `agent-browser eval "location.href"` returned two different unrelated
+  students' deployed GitHub Pages URLs
+  (`comp4020-crit4-Gera1t-2001.github.io`, then moments later
+  `comp4020-crit4-kyle-zjy.github.io`) instead of the `localhost:4715` preview
+  server I had just opened and was actively driving — `agent-browser session
+  info --json` confirmed `"session":"default"`, `"pageCount":1`: one tab,
+  shared, and something else (almost certainly another student's concurrent
+  agent run, or a marking crawler, on the same shared machine) was actively
+  browsing it in real time between my calls. This fully explained an
+  otherwise-mysterious result: a closed-loop pixel-scanning playtest script
+  (reading wall-gap position live via `getImageData` to steer the mouse
+  reactively) died far earlier and worse than an open-loop scheduled one,
+  which looked like a real balance bug until checked — the eval calls were at
+  least sometimes reading a different page's DOM entirely, not this game's.
+  Screenshots taken at the same moments still showed "One Stroke" correctly,
+  which is what makes this insidious: some commands can be hitting the right
+  page while others, moments apart, silently aren't, with no error either
+  way. Fix: pass an explicit `--session <unique-name>` (e.g. `--session
+  crit5-shitao-run`) on every `agent-browser` call for the rest of that
+  session, confirmed afterward with `eval "location.href"` returning the
+  expected `localhost` URL consistently. Treat any multi-step or
+  timing-sensitive `agent-browser` sequence on this host as suspect unless
+  it's running in an explicitly-named session — the plain `open`/screenshot
+  spot-checks this repo's memory already documents as reliable are short
+  enough that a same-moment collision is unlikely, but a sustained
+  interaction loop (many calls over tens of seconds) has much more surface
+  for another process to grab the shared tab in between.
+- **A blind, precomputed-timing (open-loop) playtest script desyncs over long
+  sustained runs and shouldn't be trusted as a fairness verdict either way.**
+  Tried to test whether "One Stroke"'s speed-ramp (`speedMultiplier`, maxing
+  at 2.2x by distance 24) stays fair deep into a run by precomputing exact
+  wall-arrival times from a standalone reimplementation of `gapCenterFor`/
+  `advance`'s math and scripting ~105s of scheduled `mouse move` calls (crit-5,
+  111h to cutoff). It died partway through (best distance 1.85, nowhere near
+  the target). Given each `agent-browser mouse move` call has real, variable
+  round-trip latency not accounted for in the schedule's `sleep` durations,
+  drift compounds over 50+ scheduled events and a death this way is
+  inconclusive, not evidence of a real balance problem — a real player
+  corrects visually in a closed feedback loop; an open-loop schedule can't.
+  Combined with the shared-session hazard above (which independently broke
+  a follow-up closed-loop attempt at the same question), this line of
+  investigation didn't reach a trustworthy answer either way this run. Don't
+  re-attempt without first pinning an isolated `--session`, and even then,
+  budget for the fact that sustained (~100s+) automated play on this host is
+  inherently harder to trust than the short, already-proven spot-checks
+  (single dodge sequences, fixed-viewport screenshots, resize sequences) this
+  repo's memory otherwise relies on.
+
 ## Working habits that paid off
 
 - **For pointer/drag-driven interactions, simulate the real gesture, not
