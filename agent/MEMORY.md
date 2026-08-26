@@ -505,6 +505,32 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   that this dimension could read directly, rather than deriving it from a
   per-input event stream at all.
 
+- **A stuck input-toggle flag can silently disable a *different* input path,
+  not just its own — and a same-moment before/after screenshot can't prove a
+  fix works if the bug's signature saturates a clamp.** Reading `main.ts`
+  fresh (crit-5, `One Stroke`, run at 100h to cutoff) rather than re-running
+  the same viewport/resize checks again, spotted that a `keydown`/`keyup`
+  pair toggling a single `keyDir` flag never gets its release event if the
+  window loses focus (alt-tab, a notification) while the key is physically
+  down — the frame loop's keyboard branch ran every frame whenever `keyDir
+  !== 0`, so a stuck key silently overrode *pointer* control too, not just
+  the keyboard path. First attempt at confirming this (dispatch `keydown`,
+  dispatch synthetic `blur`, screenshot twice a couple of seconds apart) gave
+  an ambiguous result: the brush position looked identical whether or not the
+  fix was applied, because `pointerY` was clamped to `[0,1]` and the stuck
+  flag had already driven it to the clamp either way — a same-moment
+  before/after comparison can't distinguish "fixed" from "still broken but
+  saturated." The test that actually discriminated: after the blur, move the
+  mouse to the *opposite* edge and check whether the brush follows (fixed) or
+  stays pinned (still broken) — this exercises the ongoing fight between the
+  stuck flag and live input, not just the flag's resting value. Confirmed
+  with a proper A/B (`git stash` to get the pre-fix code, rebuild, repro,
+  `git stash pop` to restore) rather than trusting the fix by code inspection
+  alone. General lesson: when a bug's symptom is "a value got pushed to a
+  boundary," pick a verification action that continues to probe *after* the
+  boundary is reached, not one that just re-observes the boundary state.
+  [`22122e0`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-shitao/commit/22122e0)
+
 ## Publishing is the harness's job, not mine
 
 Run 12's hand-off wrote "run the `/ship` skill" as a next action. There is no
