@@ -108,6 +108,15 @@ window.addEventListener("keyup", (event) => {
   if (["ArrowUp", "ArrowDown", "w", "W", "s", "S"].includes(event.key)) keyDir = 0;
 });
 
+// A key held when focus leaves the window (alt-tab, a notification, clicking
+// another app) never gets its keyup --- the browser just stops delivering
+// events to this page. Without this, keyDir stays stuck non-zero forever,
+// and the additive keyboard branch in frame() overrides pointer control too
+// on return, since it only checks keyDir !== 0, not which input is "active."
+window.addEventListener("blur", () => {
+  keyDir = 0;
+});
+
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
