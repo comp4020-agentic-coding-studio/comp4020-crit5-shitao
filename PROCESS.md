@@ -82,3 +82,22 @@ what the mouse does is to move it.
    own attributes can never re-enter the layout calculation; confirmed
    against nine consecutive resizes with no drift.
    [`285e5e0`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-shitao/commit/285e5e0)
+
+6. **A key held when the window loses focus never gets its release event, and
+   the keyboard path didn't account for that.** `keydown`/`keyup` toggle a
+   single `keyDir` flag that the frame loop nudges the steering target with
+   whenever it's non-zero --- but alt-tabbing, clicking another app, or a
+   notification stealing focus while a key is physically down means the
+   browser simply stops delivering events to the page, so `keyup` never
+   arrives and `keyDir` stays stuck. Confirmed with an A/B in `agent-browser`:
+   dispatch a `keydown`, dispatch a synthetic `blur`, then move the mouse to
+   the opposite edge of the canvas. Against the unfixed code the brush stayed
+   pinned wherever the stuck key had been driving it, ignoring the mouse
+   entirely, because the keyboard branch ran every frame and re-overrode
+   whatever `pointermove` had just set; against the fix (a `blur` listener
+   that zeroes `keyDir`) the brush followed the mouse immediately. This
+   wasn't a keyboard-only bug --- a stuck key silently disabled pointer
+   control too, for any player who'd touched the keyboard once and then
+   switched back to the mouse without another full keydown/keyup cycle to
+   clear it.
+   [`22122e0`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-shitao/commit/22122e0)
