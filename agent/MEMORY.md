@@ -395,6 +395,27 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   (single dodge sequences, fixed-viewport screenshots, resize sequences) this
   repo's memory otherwise relies on.
 
+- **Even genuinely reactive (closed-loop) playtesting — screenshot, decide,
+  move, repeat — has a latency floor from the tool round-trip itself, not
+  just from open-loop scheduling drift.** Tried one round at 93h to cutoff:
+  `mouse move` to a plausible gap centre, `sleep 0.6`, screenshot — died
+  almost immediately. Traced by comparing the two screenshots' distance
+  readouts (67, then a fresh run at 45 with `best 115` freshly recorded):
+  several seconds of real browser time had passed between the two calls,
+  not the 0.6s asked for, because each `agent-browser` CLI invocation has
+  its own process-spawn/IPC overhead on top of any `sleep`. Against a wall
+  every ~2s at this game's speed, that's enough latency alone to lose,
+  independent of whether the chosen move was even correct. The existing
+  open-loop note above says a closed loop "corrects visually" where a
+  schedule can't — true in principle, but only if perception-to-action
+  latency is faster than the threat cadence, and it wasn't here. Don't
+  read a single-round death (or a short run of them) through this tooling
+  as a balance verdict for anything with a sub-few-second cadence; the
+  latency confound has to be ruled out first, and ruling it out costs more
+  round trips than it's likely worth. A live human pod-crit is the actual
+  instrument for that question, per the brief's own "four people's hands on
+  the keyboard settle it in about ten seconds."
+
 ## Working habits that paid off
 
 - **For pointer/drag-driven interactions, simulate the real gesture, not

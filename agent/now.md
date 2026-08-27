@@ -1,53 +1,50 @@
-# Hand-off — crit-5 (One Stroke): found and fixed a real bug via a fresh angle
+# Hand-off — crit-5 (One Stroke): checked, nothing new to fix
 
 **Deliverable:** `comp4020-crit5-shitao`, source `crits/05-game` ("A game").
-This run was 100h to cutoff — plan/build/deepen, not the final run. Brief
+This run was 93h to cutoff — plan/build/deepen, not the final run. Brief
 re-fetched, byte-identical to every prior run.
 
-**State found at start of run:** `main` at `b3e2779` (a memory tick-snapshot;
-no real commits since the prior run's `285e5e0`/`5d7d4ab`). Working tree
-clean, `pnpm check` green (28 tests). Prior run (111h to cutoff) had already
-re-verified both marking viewports and tried (inconclusively) a sustained-play
-fairness question; five solid PROCESS.md moments already existed.
+**State found at start of run:** `main` at `ddd1a6b` (a memory tick-snapshot;
+the prior run's two real commits, `22122e0`/`cf5fb6c`, were already pushed by
+the harness's tick-snapshot push — not something I did). Working tree clean,
+`origin/main` up to date, `pnpm check` green (28 tests). Six solid PROCESS.md
+moments already exist.
 
-**What this run did:** rather than repeat the same viewport/resize
-verification pass so soon after the last one, read `game-logic.ts`/`main.ts`
-end to end looking for something genuinely new. Found it: `keydown`/`keyup`
-toggle a single `keyDir` flag, but a key held when the window loses focus
-(alt-tab, a notification, clicking another app) never gets its `keyup` — the
-browser just stops delivering events. `keyDir` stayed stuck non-zero forever,
-and the frame loop's keyboard branch ran every frame whenever `keyDir !== 0`,
-silently overriding pointer control too (not just keyboard) for any player
-who touched a key once and switched back to the mouse.
+**What this run did:** read `main.ts`/`game-logic.ts`/`styles.css` fresh
+end-to-end rather than assuming "checked recently, skip it" — no new bug or
+gap turned up (the ink/drop-correlation balance issue and the resize
+feedback loop are both already fixed; the blur/stuck-key fix from the prior
+run reads correctly). Ran a live preview and a genuine playtest pass:
 
-Confirmed with a proper A/B in an isolated `agent-browser --session
-crit5-shitao-run`: dispatch a synthetic `keydown`, then a synthetic `blur`,
-then move the mouse to the opposite edge of the canvas. Unfixed code: brush
-stayed pinned wherever the stuck key had driven it, ignoring the mouse
-entirely. Fixed code (a `window.addEventListener("blur", () => keyDir = 0)`):
-brush followed the mouse immediately. Did the A/B properly — `git stash` to
-get the pre-fix code, rebuilt, re-ran the identical repro, `git stash pop` to
-restore — rather than trusting the fix by inspection alone. Also re-checked
-both marking viewports (1920x1080, 390x844) after the change: pixel-fine,
-console clean. Preview server shut down and confirmed free
-(`lsof -ti:4715` empty) afterward.
+- Opened in an isolated `agent-browser --session crit5-shitao-r93` (the
+  shared-session hazard documented in MEMORY.md), confirmed the title and
+  viewport before trusting anything.
+- Tried one round of reactive (closed-loop) play at the default 1280x577
+  viewport. It died almost immediately from a mistimed dodge — traced this
+  to real round-trip latency between successive `agent-browser` calls
+  (~1-2s each) outpacing the game's actual wall-arrival cadence, not a game
+  bug. This reconfirms the standing note that sustained interactive
+  playtesting via this tooling on this host is inherently unreliable for
+  *balance* verdicts either way — didn't spend further budget chasing it.
+  Usefully, the death did prove something real: the best-distance readout
+  (67 → death at ~115 → "best 115" shown → fresh run) persisted correctly
+  across an actual in-session death, not just in isolated prior checks.
+- Reloaded and re-checked both marking viewports (1920x1080, 390x844):
+  pixel-correct, `errors` clean at both.
+- Shut the preview server down and confirmed port 4715 free via `lsof`
+  (not just the kill command's exit code — the documented gotcha).
 
-**Commits this run:** `22122e0` (the fix), `cf5fb6c` (PROCESS.md, moment 6).
-Not pushed — inside-24h gate hasn't opened yet (100h to cutoff).
+**Commits this run:** none. Nothing needed changing.
 
-**State at end of run:** `main` at `cf5fb6c` locally (2 commits ahead of
-`origin/main`), working tree clean, `pnpm check` green.
+**State at end of run:** `main` at `ddd1a6b`, working tree clean, matches
+`origin/main`.
 
-**Most important next action:** nothing further needs building unless a
-future run's own pass turns up something new. The game now has six solid
-PROCESS.md moments — plenty for the finishing-run writeup. On the run the
-prompt calls final: write `reflections/crit-5.md` (title "A game", 150–300
-words, both standing prompts). Strongest breakthrough candidates, in order:
-(1) the resize-feedback-loop bug (`285e5e0`) — the deepest, most surprising
-CSS mechanism found all deliverable; (2) this run's stuck-`keyDir`-on-blur
-bug — found by reading the source fresh rather than re-running the same
-verification pass, and confirmed with a disciplined A/B rather than trusting
-the fix by inspection. Either answers "what changed about the developer you
-want to be" well: read the code for genuinely new angles rather than
-re-verifying the same ground, and don't trust a one-sided "it looks fixed"
-without reproducing the bug first.
+**Most important next action:** nothing to build unless a future run's own
+fresh read turns something up — don't manufacture scope against a satisfied
+brief. The six PROCESS.md moments are enough for the finishing-run writeup;
+strongest breakthrough candidates for `reflections/crit-5.md`, in order: (1)
+the resize-feedback-loop bug (`285e5e0`) — the deepest CSS mechanism found
+all deliverable; (2) the stuck-`keyDir`-on-blur bug (`22122e0`) — found by
+reading source fresh, confirmed with a disciplined A/B. On the run the
+prompt calls final: write the reflection (title "A game", 150–300 words,
+both standing prompts), do the finishing-steps checklist, and push.
