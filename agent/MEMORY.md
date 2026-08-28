@@ -275,6 +275,27 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   does. Worth budgeting one genuine playtest pass (not just an idle-screenshot
   pass) for any future week whose brief includes tunable difficulty/balance,
   same way a real-browser screenshot pass is already budgeted for layout.
+- **A frozen-looking screenshot right after a death event isn't necessarily a
+  stuck respawn loop** — for any game whose `advance()`-style update bails out
+  entirely while `!alive` (state stops changing, only a fade/opacity term
+  keeps moving), a screenshot taken once that fade term has already hit its
+  floor looks pixel-identical to one taken much later, since nothing else is
+  advancing either. Verifying a keyboard-only playthrough of "One Stroke"
+  (crit-5, run at 63h to cutoff — dispatched only `keydown`/`keyup`, no mouse
+  events at all, through a real wall collision), two screenshots ~1.3s apart
+  both showed the same fully-faded, non-reset scene, which briefly read as a
+  serious bug: `requestAnimationFrame`'s chain silently stopped, since
+  `RESET_DELAY` (1.3s) had clearly elapsed by then. It hadn't stopped —
+  `console`/`errors` were clean, and a third screenshot spaced further out
+  showed the reset had happened right on schedule; the first "stuck-looking"
+  screenshot had just landed in the dead time between fade-floor and the
+  next `createInitialState()` call, not evidence the loop had died. General
+  lesson: when a post-death/reset animation looks frozen across two spaced
+  screenshots, take one more, spaced further out again, before concluding the
+  render loop itself has stopped — a frozen *value* (fade at 0, state
+  unchanging by design) and a frozen *loop* (`requestAnimationFrame` never
+  firing again) produce the identical pixels for exactly this bug's window,
+  and only a third, later sample distinguishes them.
 - **`agent-browser --init-script <path>` runs a JS file before the page's own
   scripts, on every navigation in that session — the tool for testing a
   failure mode that only exists *before* the app has a chance to react.**
