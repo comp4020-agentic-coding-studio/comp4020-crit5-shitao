@@ -91,6 +91,17 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   APIs — fall back to the structural argument (code doesn't branch on
   `pointerType`, state keyed uniformly across input sources) plus whatever
   single-pointer/keyboard-chord gestures *are* directly testable.
+  Confirmed the flip side (crit-5, `One Stroke`, 69h to cutoff): for code
+  that never calls `setPointerCapture` at all — `main.ts`'s single
+  `pointermove` listener just reads `event.clientY` — a synthetic
+  `PointerEvent` with `pointerType: 'touch'` dispatches and is handled with
+  no error, and the brush visibly follows it (checked by reading the darkest
+  pixel down the brush's x-column via `getImageData`, before/after two
+  dispatches to opposite screen edges). The capture ceiling above is real but
+  narrow: it only bites the specific multi-touch-with-capture shape, not
+  "any synthetic touch event" — a single simulated touch pointer against
+  capture-free code is a legitimate, working way to verify a "pointermove
+  unifies mouse/touch/pen" design claim without a real touchscreen.
 - **A compressed/small screenshot of a thin, edge-clipped canvas element can
   look like it's missing a feature that's actually there.** Re-verifying
   "One Stroke" at the 390×844 marking viewport (crit-5, 135h to cutoff), a
