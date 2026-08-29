@@ -1,49 +1,51 @@
-# Hand-off — crit-5 (One Stroke): viewport/resize sweep re-confirmed, still nothing to fix
+# now
 
-**Deliverable:** `comp4020-crit5-shitao`, source `crits/05-game` ("A game").
-This run was 52h to cutoff — plan/build/deepen, not the final run (the prompt
-did not call it final). Brief re-fetched, byte-identical to every prior run.
+**Run at 45h to cutoff (2026-08-29 15:00 AEST).** Not the final run — prompt
+gave no "last run" signal, so worked the routine as plan/build/deepen, not
+finishing steps.
 
-**State found at start of run:** `main` at `30fb1dd` (memory tick-snapshots
-only since the prior run's `8bb77db` — no new substantive commits). Working
-tree clean, `origin/main` up to date, `pnpm check` green (28 tests, typecheck
-+ build clean).
+## What I found
 
-**What this run did:** re-read `main.ts`, `game-logic.ts`, `styles.css` fresh
-end-to-end — found nothing wrong. Per the prior hand-off, the resize/viewport
-sweep was the standing discipline item due (last done at 285e5e0 + its
-confirmation, ~124h to cutoff at the time — several days stale). Started
-`vite preview --port 4713` (confirmed bound port from its log line), opened it
-in a uniquely-named `agent-browser` session (`crit5-shitao-run52`, avoiding the
-shared-default-session hazard documented in MEMORY.md). Checked, in sequence:
-both marking viewports (1920×1080, 390×844 — screenshots clean, console/errors
-clean, persisted `best 115` correctly shown on mobile); one in-between size
-(1280×720, a realistic laptop window — the specific gap the sixth MEMORY.md
-confirmation flagged as untested by the two extremes alone); then a five-step
-resize *sequence* in one session (1024×768 → 1600×900 → 800×1200 → 1920×1080 →
-1280×720, each followed by a `resize` event dispatch) reading the canvas's own
-`width`/`height`/`style.width`/`style.height` back after every step. All five
-tracked their requested viewport proportionately with no compounding drift —
-the `285e5e0` feedback-loop fix holds under repeated resizes, not just a single
-before/after check. A final screenshot mid-sequence (at the 1920×1080 step)
-showed correct wall/gap/drop rendering with no visual artefacts. Console/errors
-stayed clean throughout the whole sweep. Shut the preview server down and
-verified the port was actually free afterward (`lsof`, not `pkill`'s exit
-code).
+Working tree was clean, `origin/main` up to date, nothing to reconcile beyond
+two days of memory-tick-only commits (last real code commit was `22122e0`,
+2026-08-27, the blur/stuck-key fix). `pnpm check` green (28/28 tests, clean
+build, clean typecheck). `pnpm check:evidence` fails on exactly one thing:
+`reflections/crit-5.md` doesn't exist yet — expected and correct to defer,
+per the standing "finishing steps gated to inside 24h to cutoff" rule.
 
-**Commits this run:** none. Nothing in the repo needed changing.
+Ran a full re-verification pass since it had been ~2.5 days since the last
+real browser check (the standing periodic-check rule): both marking
+viewports (1920x1080, 390x844), one in-between (1280x720), a 7-step resize
+sequence across varied aspect ratios (confirms the `285e5e0` canvas-growth
+fix still holds — no drift, `attrW`/`attrH` tracked `innerWidth`/`innerHeight`
+proportionally every time), console/errors clean throughout, and a short real
+mouse-driven playtest (wall + drop both rendering and interactable, distance
+climbing, best-score persisted at 115 from an earlier run). Found nothing
+wrong. `public/card.png` is a genuine render of the game's own layout, not a
+placeholder — already correct, nothing to redo there.
 
-**State at end of run:** `main` at `30fb1dd`, working tree clean, matches
-`origin/main`.
+## State of the game
 
-**Most important next action:** nothing to build unless a future run's own
-fresh read turns something up — don't manufacture scope against a satisfied
-brief. Three verification claims now confirmed live (touch, keyboard, resize
-sequence); consider the standing viewport/resize discipline caught up as of
-this run rather than due again immediately. The six PROCESS.md moments remain
-enough raw material for the finishing-run writeup; strongest breakthrough
-candidates for `reflections/crit-5.md`, in order: (1) the resize-feedback-loop
-bug (`285e5e0`); (2) the stuck-`keyDir`-on-blur bug (`22122e0`); (3) the
-ink-balance playtest fix (`cd95873`). On the run the prompt calls final: write
-the reflection (title "A game", 150–300 words, both standing prompts), do the
-finishing-steps checklist, and push.
+"One Stroke" reads as feature-complete against the brief: one canvas, no
+instructions anywhere, two interacting mechanics (wall-dodging + ink/drop
+management, rebalanced in `cd95873` after real play showed the second
+mechanic wasn't threatening), best-distance persistence with a
+storage-blocked-browser guard, keyboard/mouse/touch all unified through
+`pointermove` + a `keyDir` flag with a blur-reset. Six real bugs found and
+fixed across the last several runs (see PROCESS.md's "moments that mattered"
+and `memory/MEMORY.md`'s tooling-gotchas section) — none of that work needs
+redoing.
+
+## Next action
+
+Nothing broken to fix right now. The single most important next action is
+whichever run gets explicitly told it's the last one: write
+`reflections/crit-5.md` (title "A game", not a week number, 150-300 words,
+both standing prompts — the breakthrough and what it changed about the kind
+of developer I want to be; the blur/stuck-key bug or the ink-rebalance
+playtest are the strongest candidates for "the breakthrough"), confirm
+`pnpm check:evidence` passes, then push. Until that run: if nothing new
+breaks, a genuine playtest pass (not just a static screenshot pass) is still
+the highest-value thing to spend a run on, since that's the check class that
+found the ink-balance bug and none of the automated suite can catch a repeat
+of that shape.
