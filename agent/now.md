@@ -1,49 +1,47 @@
 # now
 
-**Run at 39h to cutoff (2026-08-29 21:00 AEST).** Not the final run — prompt
-gave no "last run" signal again, same as the 45h run six hours earlier.
+**Final run for crit-5, 28h to cutoff (2026-08-30 08:00 AEST).** Prompt
+explicitly named this the last run for `comp4020-crit5-shitao`; finishing
+steps are done and pushed. Nothing further to do on this repo unless a
+convenor commit lands or a future prompt reopens it.
 
-## What I found
+## What happened this run
 
-Nothing has changed since the 45h run: working tree clean, `origin/main` up
-to date, no new commits (only that run's own memory ticks). `pnpm check`
-green (28/28 tests, clean typecheck, clean build). `pnpm check:evidence`
-fails on exactly the one expected thing — `reflections/crit-5.md` doesn't
-exist yet, correctly deferred per the finishing-steps gate. Only one git
-remote (`origin`); no upstream template remote configured for this repo, so
-there was nothing to reconcile against a convenor push either.
+Confirmed the game was already feature-complete (per the 39h/45h notes) with
+`pnpm check` green (28/28 tests) and `pnpm check:evidence` failing only on
+the expected missing `reflections/crit-5.md`. Did one more real-browser pass
+before shipping rather than trusting the prior runs' word for it: preview
+server on port 4713 (confirmed the bound port before opening, per the
+standing gotcha), a named `agent-browser` session (`crit5-final`, per the
+shared-default-session gotcha), both marking viewports (1920x1080, 390x844)
+plus an in-between size (1280x800), a live mouse-driven playtest showing
+walls/drops/ink-meter/score all rendering and responding correctly, `errors`
+clean throughout. Nothing new to fix — this was verification, not discovery.
 
-Deliberately did **not** repeat the 45h run's full re-verification pass
-(both marking viewports, in-between size, resize sequence, real playtest) —
-that pass ran against this exact same code six hours ago and found nothing;
-repeating it on unchanged source would just re-confirm the same result, not
-generate new information. Re-read `main.ts` and `game-logic.ts` in full
-instead, looking for anything to deepen or any static bug the six prior
-playtests might have missed — found nothing: the pointer/keyboard/blur
-handling, resize math, ink/wall interaction, and best-distance persistence
-all still read as correct and match what's already tested in
-`spec/game.test.ts` and exercised in `PROCESS.md`'s six documented fixes.
+Wrote `reflections/crit-5.md` (268 words, both standing prompts: the
+ink-balance-after-playing breakthrough as the throughline that ties together
+all six bugs found across the week — every real defect this build shipped
+lived in the *interaction* between two correct-looking pieces, not in either
+piece alone, which is why green checks and screenshots weren't enough and
+playing/resizing/reading-pixels was). `pnpm check:evidence` passed clean
+after. Committed (`99d0c9e`) and pushed — `origin/main` now has it.
 
 ## State of the game
 
-Unchanged from the 45h note: "One Stroke" is feature-complete against the
-brief — one canvas, no instructions anywhere, two interacting mechanics
-(wall-dodging + ink/drop management, rebalanced after real play in
-`cd95873`), a focused test on the one collision rule
-(`spec/game.test.ts`'s `checkWallCollision` suite), best-distance
-persistence with a storage-blocked-browser guard, keyboard/mouse/touch
-unified through `pointermove` + a blur-reset `keyDir` flag. Six real bugs
-found and fixed across prior runs; none of that needs redoing.
+"One Stroke": a single ink brushstroke steered by pointer/touch/keyboard,
+threading gaps in advancing wall bands while managing an ink meter that
+depletes unless topped up by drifting drops. No on-screen instructions
+anywhere; the opening screen shows the still brush and the first band
+already approaching. Best distance persists across runs via a
+storage-guarded `localStorage`. Six real bugs found and fixed across the
+week (see `PROCESS.md`), all still holding: pure-simulation test coverage on
+the one collision rule, ink-balance tuned by real play (not just config),
+best-distance persistence, storage-blocked-browser guard, canvas
+resize-feedback-loop fix, keyboard-stuck-on-blur fix.
 
 ## Next action
 
-Same as the 45h note: nothing broken to fix. The single most important next
-action is still whichever run gets explicitly told it's the last one —
-write `reflections/crit-5.md` (title "A game", 150–300 words, both standing
-prompts), confirm `pnpm check:evidence` passes, then push. Until that run:
-don't manufacture re-verification busywork against unchanged code just to
-look active — the next genuinely new information will come either from an
-actual code change (deepen something) or from enough real time passing that
-a fresh browser pass is worth the round-trip again. If a future run has
-nothing new to build and the code is still unchanged from this note, it's
-fine for that run to be this short too.
+None for this repo — the trusted publisher ships whatever's on `origin/main`
+now. If a future prompt names this repo again (unlikely per doctrine's "each
+week's source stays behind"), start by reading `git log` since `99d0c9e` for
+any convenor commits, same as every prior run's routine.
